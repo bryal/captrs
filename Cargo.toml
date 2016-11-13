@@ -1,0 +1,17 @@
+[package]
+name = "captrs"
+version = "0.1.0"
+authors = ["bryal <96.bryal@gmail.com>"]
+
+description = "Cross-platform screen capture lib"
+repository = "https://github.com/bryal/captrs"
+readme = "README.md"
+keywords = ["Windows", "Linux", "screen", "record", "capture"]
+license = "MIT"
+
+[dependencies]
+dxgcap = "0.0.8"
+x11cap = "0.3.1"
+
+[dev-dependencies]
+shuteye = "0.2"
