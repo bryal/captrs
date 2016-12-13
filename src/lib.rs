@@ -6,6 +6,8 @@ extern crate dxgcap;
 #[cfg(not(windows))]
 extern crate x11cap;
 
+use std::time::Duration;
+
 /// Color represented by additive channels: Blue (b), Green (g), Red (r), and Alpha (a)
 #[cfg(windows)]
 pub type Bgr8 = dxgcap::BGRA8;
@@ -46,18 +48,27 @@ pub struct Capturer {
 impl Capturer {
     #[cfg(windows)]
     pub fn new(capture_src: usize) -> Result<Capturer, String> {
-        // Timeout at 200ms
-        match dxgcap::DXGIManager::new(200) {
-            Ok(mgr) => {
-                mgr.set_capture_source_index(capture_src);
-                Ok(Capturer {
-                    dxgi_manager: mgr,
-                    width: 0,
-                    height: 0,
-                })
-            }
-            Err(e) => e.to_string(),
-        }
+        Capturer::new_with_timeout(capture_src, Duration::from_millis(200))
+    }
+
+    #[cfg(windows)]
+    pub fn new_with_timeout(capture_src: usize, timeout: Duration) -> Result<Capturer, String> {
+        (timeout.as_secs() as u32)
+            .checked_mul(1000)
+            .and_then(|ms| ms.checked_add(timeout.subsec_nanos() / 1_000_000))
+            .ok_or("Failed to convert the given duration to a legal u32 millisecond value due to integer overflow.")
+            .and_then(|timeout| {
+                dxgcap::DXGIManager::new(timeout)
+                    .map(|mut mgr| {
+                        mgr.set_capture_source_index(capture_src);
+                        Capturer {
+                            dxgi_manager: mgr,
+                            width: 0,
+                            height: 0,
+                        }
+                    })
+            })
+            .map_err(|err| err.to_owned())
     }
 
     #[cfg(not(windows))]
@@ -69,7 +80,7 @@ impl Capturer {
 
     #[cfg(windows)]
     pub fn geometry(&self) -> (u32, u32) {
-        (self.width, self.height)
+        (self.width as u32, self.height as u32)
     }
 
     #[cfg(not(windows))]
@@ -88,11 +99,11 @@ impl Capturer {
                 self.height = h;
                 Ok(data)
             }
-            Err(AccessDenied) => CaptureError::AccessDenies,
-            Err(AccessLost) => CaptureError::AccessLost,
-            Err(RefreshFailure) => CaptureError::RefreshFailure,
-            Err(Timeout) => CaptureError::Timeout,
-            Err(Fail(e)) => CaptureError::Fail(e.to_string()),
+            Err(AccessDenied) => Err(CaptureError::AccessDenied),
+            Err(AccessLost) => Err(CaptureError::AccessLost),
+            Err(RefreshFailure) => Err(CaptureError::RefreshFailure),
+            Err(Timeout) => Err(CaptureError::Timeout),
+            Err(Fail(e)) => Err(CaptureError::Fail(e.to_string())),
         }
     }
 
