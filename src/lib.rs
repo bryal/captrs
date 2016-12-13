@@ -46,18 +46,16 @@ pub struct Capturer {
 impl Capturer {
     #[cfg(windows)]
     pub fn new(capture_src: usize) -> Result<Capturer, String> {
-        // Timeout at 200ms
-        match dxgcap::DXGIManager::new(200) {
-            Ok(mgr) => {
+        dxgcap::DXGIManager::new(timeout)
+            .map(|mut mgr| {
                 mgr.set_capture_source_index(capture_src);
-                Ok(Capturer {
+                Capturer {
                     dxgi_manager: mgr,
                     width: 0,
                     height: 0,
-                })
-            }
-            Err(e) => e.to_string(),
-        }
+                }
+            })
+            .map_err(|err| err.to_owned())
     }
 
     #[cfg(not(windows))]
@@ -69,7 +67,7 @@ impl Capturer {
 
     #[cfg(windows)]
     pub fn geometry(&self) -> (u32, u32) {
-        (self.width, self.height)
+        (self.width as u32, self.height as u32)
     }
 
     #[cfg(not(windows))]
@@ -88,11 +86,11 @@ impl Capturer {
                 self.height = h;
                 Ok(data)
             }
-            Err(AccessDenied) => CaptureError::AccessDenies,
-            Err(AccessLost) => CaptureError::AccessLost,
-            Err(RefreshFailure) => CaptureError::RefreshFailure,
-            Err(Timeout) => CaptureError::Timeout,
-            Err(Fail(e)) => CaptureError::Fail(e.to_string()),
+            Err(AccessDenied) => Err(CaptureError::AccessDenied),
+            Err(AccessLost) => Err(CaptureError::AccessLost),
+            Err(RefreshFailure) => Err(CaptureError::RefreshFailure),
+            Err(Timeout) => Err(CaptureError::Timeout),
+            Err(Fail(e)) => Err(CaptureError::Fail(e.to_string())),
         }
     }
 
