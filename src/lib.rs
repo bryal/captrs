@@ -56,7 +56,7 @@ impl Capturer {
         (timeout.as_secs() as u32)
             .checked_mul(1000)
             .and_then(|ms| ms.checked_add(timeout.subsec_nanos() / 1_000_000))
-            .ok_or("Failed to convert the given duration to a legal u32 millisecond value due to integer overflow.".to_owned())
+            .ok_or("Failed to convert the given duration to a legal u32 millisecond value due to integer overflow.")
             .and_then(|timeout| {
                 dxgcap::DXGIManager::new(timeout)
                     .map(|mut mgr| {
@@ -67,8 +67,8 @@ impl Capturer {
                             height: 0,
                         }
                     })
-                    .map_err(|err| err.to_owned())
             })
+            .map_err(|err| err.to_owned())
     }
 
     #[cfg(not(windows))]
