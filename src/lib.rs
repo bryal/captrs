@@ -6,6 +6,8 @@ extern crate dxgcap;
 #[cfg(not(windows))]
 extern crate x11cap;
 
+use std::time::Duration;
+
 /// Color represented by additive channels: Blue (b), Green (g), Red (r), and Alpha (a)
 #[cfg(windows)]
 pub type Bgr8 = dxgcap::BGRA8;
@@ -57,19 +59,28 @@ impl Capturer {
     /// Construct a new capturer for a given capture source, e.g. a display.
     #[cfg(windows)]
     pub fn new(capture_src: usize) -> Result<Capturer, String> {
-        // Timeout at 200ms
-        match dxgcap::DXGIManager::new(200) {
-            Ok(mgr) => {
-                mgr.set_capture_source_index(capture_src);
-                Ok(Capturer {
-                    dxgi_manager: mgr,
-                    width: 0,
-                    height: 0,
-                    image: None,
+        Capturer::new_with_timeout(capture_src, Duration::from_millis(200))
+    }
+
+    #[cfg(windows)]
+    pub fn new_with_timeout(capture_src: usize, timeout: Duration) -> Result<Capturer, String> {
+        (timeout.as_secs() as u32)
+            .checked_mul(1000)
+            .and_then(|ms| ms.checked_add(timeout.subsec_nanos() / 1_000_000))
+            .ok_or("Failed to convert the given duration to a legal u32 millisecond value due to \
+                    integer overflow.")
+            .and_then(|timeout| {
+                dxgcap::DXGIManager::new(timeout).map(|mut mgr| {
+                    mgr.set_capture_source_index(capture_src);
+                    Capturer {
+                        dxgi_manager: mgr,
+                        width: 0,
+                        height: 0,
+                        image: None,
+                    }
                 })
-            }
-            Err(e) => e.to_string(),
-        }
+            })
+            .map_err(|err| err.to_owned())
     }
 
     /// Construct a new capturer for a given capture source, e.g. a display.
@@ -83,7 +94,7 @@ impl Capturer {
     /// Returns the width and height of the area to capture
     #[cfg(windows)]
     pub fn geometry(&self) -> (u32, u32) {
-        (self.width, self.height)
+        (self.width as u32, self.height as u32)
     }
 
     /// Returns the width and height of the area to capture
@@ -115,11 +126,11 @@ impl Capturer {
                 self.height = h;
                 Ok(data)
             }
-            Err(AccessDenied) => CaptureError::AccessDenies,
-            Err(AccessLost) => CaptureError::AccessLost,
-            Err(RefreshFailure) => CaptureError::RefreshFailure,
-            Err(Timeout) => CaptureError::Timeout,
-            Err(Fail(e)) => CaptureError::Fail(e.to_string()),
+            Err(AccessDenied) => Err(CaptureError::AccessDenied),
+            Err(AccessLost) => Err(CaptureError::AccessLost),
+            Err(RefreshFailure) => Err(CaptureError::RefreshFailure),
+            Err(Timeout) => Err(CaptureError::Timeout),
+            Err(Fail(e)) => Err(CaptureError::Fail(e.to_string())),
         }
     }
 
