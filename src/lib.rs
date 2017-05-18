@@ -31,19 +31,30 @@ pub enum CaptureError {
     Fail(String),
 }
 
+/// A screen capturer.
+///
+/// Can capture video frames with reasonable performance for
+/// screenshooting, recording, streaming, etc.
 #[cfg(windows)]
 pub struct Capturer {
     dxgi_manager: dxgcap::DXGIManager,
     width: usize,
     height: usize,
+    image: Option<Vec<Bgr8>>,
 }
 
+/// A screen capturer.
+///
+/// Can capture video frames with reasonable performance for
+/// screenshooting, recording, streaming, etc.
 #[cfg(not(windows))]
 pub struct Capturer {
     x11_capturer: x11cap::Capturer,
+    pub image: Option<x11cap::Image>,
 }
 
 impl Capturer {
+    /// Construct a new capturer for a given capture source, e.g. a display.
     #[cfg(windows)]
     pub fn new(capture_src: usize) -> Result<Capturer, String> {
         // Timeout at 200ms
@@ -54,30 +65,46 @@ impl Capturer {
                     dxgi_manager: mgr,
                     width: 0,
                     height: 0,
+                    image: None,
                 })
             }
             Err(e) => e.to_string(),
         }
     }
 
+    /// Construct a new capturer for a given capture source, e.g. a display.
     #[cfg(not(windows))]
     pub fn new(capture_src: usize) -> Result<Capturer, String> {
         x11cap::Capturer::new(x11cap::CaptureSource::Monitor(capture_src))
-            .map(|c| Capturer { x11_capturer: c })
+            .map(|c| Capturer { x11_capturer: c, image: None })
             .map_err(|()| "Failed to initialize capturer".to_string())
     }
 
+    /// Returns the width and height of the area to capture
     #[cfg(windows)]
     pub fn geometry(&self) -> (u32, u32) {
         (self.width, self.height)
     }
 
+    /// Returns the width and height of the area to capture
     #[cfg(not(windows))]
     pub fn geometry(&self) -> (u32, u32) {
         let geo = self.x11_capturer.get_geometry();
         (geo.width, geo.height)
     }
 
+    /// Returns the horizontal and vertical offset of the capture source
+    /// from the primary display.
+    #[cfg(not(windows))]
+    pub fn position(&self) -> (i32, i32) {
+        let geo = self.x11_capturer.get_geometry();
+        (geo.x, geo.y)
+    }
+
+    /// Capture screen and return an owned `Vec` of the image color data
+    ///
+    /// On Windows there's no performance difference between doing
+    /// `self.capture_frame` and `self.capture_store_frame(); self.get_stored_frame()`
     #[cfg(windows)]
     pub fn capture_frame(&mut self) -> Result<Vec<Bgr8>, CaptureError> {
         use dxgcap::CaptureError::*;
@@ -96,10 +123,55 @@ impl Capturer {
         }
     }
 
+    /// Capture screen and store in `self` for later retreival
+    #[cfg(windows)]
+    pub fn capture_store_frame(&mut self) -> Result<(), CaptureError> {
+        use dxgcap::CaptureError::*;
+
+        match self.dxgi_manager.capture_frame() {
+            Ok((data, (w, h))) => {
+                self.image = Some(data);
+                self.width = w;
+                self.height = h;
+                Ok(())
+            }
+            Err(AccessDenied) => CaptureError::AccessDenies,
+            Err(AccessLost) => CaptureError::AccessLost,
+            Err(RefreshFailure) => CaptureError::RefreshFailure,
+            Err(Timeout) => CaptureError::Timeout,
+            Err(Fail(e)) => CaptureError::Fail(e.to_string()),
+        }
+    }
+
+    /// Capture screen and return an owned `Vec` of the image color data
+    ///
+    /// Worse performance than `self.capture_store_frame(); self.get_stored_frame()`
+    /// due to an extra `.to_vec()` call.
     #[cfg(not(windows))]
     pub fn capture_frame(&mut self) -> Result<Vec<Bgr8>, CaptureError> {
-        self.x11_capturer
-            .capture_frame()
-            .map_err(|x11cap::CaptureError::Fail(e)| CaptureError::Fail(e.to_string()))
+        self.capture_store_frame().map(|_| self.get_stored_frame().unwrap().to_vec())
+    }
+
+    /// Capture screen and store in `self` for later retreival
+    ///
+    /// Performs no unnecessary allocations or copies, and is as such faster than
+    /// `Self::capture_frame`.
+    ///
+    /// Recommended over `Self::capture_frame` unless an owned `Vec` is required.
+    #[cfg(not(windows))]
+    pub fn capture_store_frame(&mut self) -> Result<(), CaptureError> {
+        match self.x11_capturer.capture_frame() {
+            Ok(image) => {
+                self.image = Some(image);
+                Ok(())
+            }
+            Err(x11cap::CaptureError::Fail(e)) => Err(CaptureError::Fail(e.to_string())),
+        }
+    }
+
+    /// Get the last frame stored in `self` by `Self::capture_store_frame`,
+    /// if one has ever been stored.
+    pub fn get_stored_frame(&self) -> Option<&[Bgr8]> {
+        self.image.as_ref().map(|img| img.as_slice())
     }
 }
