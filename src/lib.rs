@@ -6,6 +6,7 @@ extern crate dxgcap;
 #[cfg(not(windows))]
 extern crate x11cap;
 
+#[cfg(windows)]
 use std::time::Duration;
 
 /// Color represented by additive channels: Blue (b), Green (g), Red (r), and Alpha (a)

@@ -1,6 +1,6 @@
 [package]
 name = "captrs"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["bryal <96.bryal@gmail.com>"]
 
 description = "Cross-platform screen capture lib"
@@ -11,7 +11,7 @@ license = "MIT"
 
 [dependencies]
 dxgcap = "0.0.8"
-x11cap = "0.4"
+x11cap = "0.4.1"
 
 [dev-dependencies]
 shuteye = "0.2"
