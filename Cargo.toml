@@ -9,9 +9,11 @@ readme = "README.md"
 keywords = ["Windows", "Linux", "screen", "record", "capture"]
 license = "MIT"
 
-[dependencies]
-dxgcap = "0.0.8"
+[target.'cfg(not(windows))'.dependencies]
 x11cap = "0.4.1"
+
+[target.'cfg(windows)'.dependencies]
+dxgcap = "0.0.8"
 
 [dev-dependencies]
 shuteye = "0.2"
