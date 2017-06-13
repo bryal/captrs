@@ -147,11 +147,11 @@ impl Capturer {
                 self.height = h;
                 Ok(())
             }
-            Err(AccessDenied) => CaptureError::AccessDenies,
-            Err(AccessLost) => CaptureError::AccessLost,
-            Err(RefreshFailure) => CaptureError::RefreshFailure,
-            Err(Timeout) => CaptureError::Timeout,
-            Err(Fail(e)) => CaptureError::Fail(e.to_string()),
+            Err(AccessDenied) => Err(CaptureError::AccessDenied),
+            Err(AccessLost) => Err(CaptureError::AccessLost),
+            Err(RefreshFailure) => Err(CaptureError::RefreshFailure),
+            Err(Timeout) => Err(CaptureError::Timeout),
+            Err(Fail(e)) => Err(CaptureError::Fail(e.to_string())),
         }
     }
 
@@ -161,7 +161,8 @@ impl Capturer {
     /// due to an extra `.to_vec()` call.
     #[cfg(not(windows))]
     pub fn capture_frame(&mut self) -> Result<Vec<Bgr8>, CaptureError> {
-        self.capture_store_frame().map(|_| self.get_stored_frame().unwrap().to_vec())
+        self.capture_store_frame()
+            .map(|_| self.get_stored_frame().unwrap().to_vec())
     }
 
     /// Capture screen and store in `self` for later retreival
