@@ -1,12 +1,12 @@
 [package]
 name = "captrs"
-version = "0.2.3"
+version = "0.3.0"
 authors = ["jojo <jo@jo.zone>"]
 description = "Cross-platform screen capture library"
 repository = "https://github.com/bryal/captrs"
 readme = "README.md"
 keywords = ["Windows", "Linux", "screen", "record", "capture"]
-license = "MIT"
+license = "AGPL-3.0"
 edition = "2018"
 
 [target.'cfg(not(windows))'.dependencies]
