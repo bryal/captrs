@@ -1,14 +1,10 @@
 # captrs
 
-Cross-platform screen capture in Rust. Uses
+Library for cross-platform screen capture in Rust. Uses
 [dxgcap](https://github.com/bryal/dxgcap-rs) for capture on Windows
 via the Desktop Duplication API, and
 [X11Cap](https://github.com/bryal/X11Cap) for capture on Linux via
 xlib::XGetImage.
-
-## Building & Installing
-
-Install Rust (and Cargo) via your distribution's package manager or [rustup](https://rustup.rs/), then simply build with command `cargo build`, and install to the default cargo installation location with `cargo install`.
 
 ## License
 
