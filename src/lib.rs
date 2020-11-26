@@ -94,8 +94,9 @@ impl Capturer {
 
     /// Returns the width and height of the area to capture
     #[cfg(windows)]
-    pub fn geometry(&self) -> (u32, u32) {
-        (self.width as u32, self.height as u32)
+    pub fn geometry(&mut self) -> (u32, u32) {
+        let (w, h) = self.dxgi_manager.geometry();
+        (w as u32, h as u32)
     }
 
     /// Returns the width and height of the area to capture
