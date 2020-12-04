@@ -13,7 +13,7 @@ edition = "2018"
 x11cap = "0.4.1"
 
 [target.'cfg(windows)'.dependencies]
-dxgcap = "0.2.1"
+dxgcap = "0.2.4"
 
 [dev-dependencies]
 shuteye = "0.2"
