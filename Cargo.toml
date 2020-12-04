@@ -1,6 +1,6 @@
 [package]
 name = "captrs"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["jojo <jo@jo.zone>"]
 description = "Cross-platform screen capture library"
 repository = "https://github.com/bryal/captrs"
