@@ -6,7 +6,6 @@ extern crate dxgcap;
 #[cfg(not(windows))]
 extern crate x11cap;
 
-#[cfg(windows)]
 use std::time::Duration;
 
 /// Color represented by additive channels: Blue (b), Green (g), Red (r), and Alpha (a)
@@ -63,6 +62,7 @@ impl Capturer {
         Capturer::new_with_timeout(capture_src, Duration::from_millis(200))
     }
 
+    /// Windows only, does nothing on other platforms. Construct a new capturer for a given capture source, e.g. a display, with a given timeout.
     #[cfg(windows)]
     pub fn new_with_timeout(capture_src: usize, timeout: Duration) -> Result<Capturer, String> {
         (timeout.as_secs() as u32)
@@ -90,6 +90,12 @@ impl Capturer {
         x11cap::Capturer::new(x11cap::CaptureSource::Monitor(capture_src))
             .map(|c| Capturer { x11_capturer: c, image: None })
             .map_err(|()| "Failed to initialize capturer".to_string())
+    }
+
+    /// Windows only, does nothing on other platforms. Construct a new capturer for a given capture source, e.g. a display, with a given timeout.
+    #[cfg(not(windows))]
+    pub fn new_with_timeout(_capture_src: usize, _timeout: Duration) -> Result<Capturer, String> {
+        Err("Windows only method. Does nothing on other platforms.".to_string())
     }
 
     /// Returns the width and height of the area to capture
