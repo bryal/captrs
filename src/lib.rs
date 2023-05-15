@@ -142,6 +142,25 @@ impl Capturer {
         }
     }
 
+    /// Capture screen and return an owned `Vec` of the image color data in bgr format
+    #[cfg(windows)]
+    pub fn capture_frame_components(&mut self) -> Result<Vec<u8>, CaptureError> {
+        use dxgcap::CaptureError::*;
+
+        match self.dxgi_manager.capture_frame_components() {
+            Ok((data, (w, h))) => {
+                self.width = w;
+                self.height = h;
+                Ok(data)
+            }
+            Err(AccessDenied) => Err(CaptureError::AccessDenied),
+            Err(AccessLost) => Err(CaptureError::AccessLost),
+            Err(RefreshFailure) => Err(CaptureError::RefreshFailure),
+            Err(Timeout) => Err(CaptureError::Timeout),
+            Err(Fail(e)) => Err(CaptureError::Fail(e.to_string())),
+        }
+    }
+
     /// Capture screen and store in `self` for later retreival
     #[cfg(windows)]
     pub fn capture_store_frame(&mut self) -> Result<(), CaptureError> {
