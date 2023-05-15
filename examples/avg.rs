@@ -1,7 +1,7 @@
-extern crate captrs2;
+extern crate captrs;
 extern crate shuteye;
 
-use captrs2::*;
+use captrs::*;
 use shuteye::sleep;
 use std::time::Duration;
 
