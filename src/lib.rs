@@ -67,9 +67,11 @@ impl Capturer {
     pub fn new_with_timeout(capture_src: usize, timeout: Duration) -> Result<Capturer, String> {
         (timeout.as_secs() as u32)
             .checked_mul(1000)
-            .and_then(|ms| ms.checked_add(timeout.subsec_nanos() / 1_000_000))
-            .ok_or("Failed to convert the given duration to a legal u32 millisecond value due to \
-                    integer overflow.")
+            .and_then(|ms| ms.checked_add(timeout.subsec_millis()))
+            .ok_or(
+                "Failed to convert the given duration to a legal u32 millisecond value due to \
+                    integer overflow.",
+            )
             .and_then(|timeout| {
                 dxgcap::DXGIManager::new(timeout).map(|mut mgr| {
                     mgr.set_capture_source_index(capture_src);
@@ -88,7 +90,10 @@ impl Capturer {
     #[cfg(not(windows))]
     pub fn new(capture_src: usize) -> Result<Capturer, String> {
         x11cap::Capturer::new(x11cap::CaptureSource::Monitor(capture_src))
-            .map(|c| Capturer { x11_capturer: c, image: None })
+            .map(|c| Capturer {
+                x11_capturer: c,
+                image: None,
+            })
             .map_err(|()| "Failed to initialize capturer".to_string())
     }
 
@@ -211,6 +216,6 @@ impl Capturer {
     /// Get the last frame stored in `self` by `Self::capture_store_frame`,
     /// if one has ever been stored.
     pub fn get_stored_frame(&self) -> Option<&[Bgr8]> {
-        self.image.as_ref().map(|img| img.as_slice())
+        self.image.as_deref()
     }
 }

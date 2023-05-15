@@ -1,7 +1,7 @@
 extern crate captrs;
 extern crate qoi;
 
-use std::{fs::File, path::Path, io::Write};
+use std::{fs::File, io::Write, path::Path};
 
 use captrs::Capturer;
 use qoi::encode_to_vec;
@@ -10,7 +10,7 @@ fn main() {
     let mut capturer = Capturer::new(1).unwrap();
 
     let (w, h) = capturer.geometry();
-    
+
     let f1 = capturer.capture_frame_components().unwrap();
     let f2 = capturer.capture_frame_components().unwrap();
 
