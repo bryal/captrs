@@ -1,9 +1,9 @@
-extern crate captrs;
+extern crate captrs2;
 extern crate qoi;
 
 use std::{fs::File, io::Write, path::Path};
 
-use captrs::Capturer;
+use captrs2::Capturer;
 use qoi::encode_to_vec;
 
 fn main() {

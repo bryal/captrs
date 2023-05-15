@@ -1,9 +1,9 @@
 [package]
-name = "captrs"
-version = "0.3.1"
-authors = ["jojo <jo@jo.zone>"]
-description = "Cross-platform screen capture library"
-repository = "https://github.com/bryal/captrs"
+name = "captrs2"
+version = "0.1.0"
+authors = ["jojo <jo@jo.zone>", "TommyGymer <github@tgymer.uk>"]
+description = "An updated version of captrs, a cross-platform screen capture library"
+repository = "https://github.com/TommyGymer/captrs"
 readme = "README.md"
 keywords = ["Windows", "Linux", "screen", "record", "capture"]
 license = "AGPL-3.0"
