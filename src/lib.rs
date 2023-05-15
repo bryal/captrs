@@ -220,12 +220,11 @@ impl Capturer {
     }
 }
 
-#[cfg(test)]
-mod captrs_tests {
+#[cfg(all(test, windows))]
+mod captrs_tests_windows {
     use super::*;
 
     #[test]
-    #[cfg(windows)]
     fn test_capture_components() {
         let mut capturer = Capturer::new(0).unwrap();
 
@@ -237,6 +236,24 @@ mod captrs_tests {
         // should be width * height * $ (RGBA)
         assert_eq!((w * h * 4) as usize, frame.len())
     }
+
+    #[test]
+    fn test_capture() {
+        let mut capturer = Capturer::new(0).unwrap();
+
+        let (w, h) = capturer.geometry();
+
+        let frame = capturer.capture_frame().unwrap();
+
+        // check that the capture is the correct size
+        // should be width * height * $ (RGBA)
+        assert_eq!((w * h) as usize, frame.len())
+    }
+}
+
+#[cfg(all(test, not(windows)))]
+mod captrs_tests_not_windows {
+    use super::*;
 
     #[test]
     fn test_capture() {
