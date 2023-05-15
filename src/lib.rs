@@ -67,9 +67,11 @@ impl Capturer {
     pub fn new_with_timeout(capture_src: usize, timeout: Duration) -> Result<Capturer, String> {
         (timeout.as_secs() as u32)
             .checked_mul(1000)
-            .and_then(|ms| ms.checked_add(timeout.subsec_nanos() / 1_000_000))
-            .ok_or("Failed to convert the given duration to a legal u32 millisecond value due to \
-                    integer overflow.")
+            .and_then(|ms| ms.checked_add(timeout.subsec_millis()))
+            .ok_or(
+                "Failed to convert the given duration to a legal u32 millisecond value due to \
+                    integer overflow.",
+            )
             .and_then(|timeout| {
                 dxgcap::DXGIManager::new(timeout).map(|mut mgr| {
                     mgr.set_capture_source_index(capture_src);
@@ -88,7 +90,10 @@ impl Capturer {
     #[cfg(not(windows))]
     pub fn new(capture_src: usize) -> Result<Capturer, String> {
         x11cap::Capturer::new(x11cap::CaptureSource::Monitor(capture_src))
-            .map(|c| Capturer { x11_capturer: c, image: None })
+            .map(|c| Capturer {
+                x11_capturer: c,
+                image: None,
+            })
             .map_err(|()| "Failed to initialize capturer".to_string())
     }
 
@@ -129,6 +134,25 @@ impl Capturer {
         use dxgcap::CaptureError::*;
 
         match self.dxgi_manager.capture_frame() {
+            Ok((data, (w, h))) => {
+                self.width = w;
+                self.height = h;
+                Ok(data)
+            }
+            Err(AccessDenied) => Err(CaptureError::AccessDenied),
+            Err(AccessLost) => Err(CaptureError::AccessLost),
+            Err(RefreshFailure) => Err(CaptureError::RefreshFailure),
+            Err(Timeout) => Err(CaptureError::Timeout),
+            Err(Fail(e)) => Err(CaptureError::Fail(e.to_string())),
+        }
+    }
+
+    /// Capture screen and return an owned `Vec` of the image color data in bgr format
+    #[cfg(windows)]
+    pub fn capture_frame_components(&mut self) -> Result<Vec<u8>, CaptureError> {
+        use dxgcap::CaptureError::*;
+
+        match self.dxgi_manager.capture_frame_components() {
             Ok((data, (w, h))) => {
                 self.width = w;
                 self.height = h;
@@ -193,5 +217,54 @@ impl Capturer {
     /// if one has ever been stored.
     pub fn get_stored_frame(&self) -> Option<&[Bgr8]> {
         self.image.as_ref().map(|img| img.as_slice())
+    }
+}
+
+#[cfg(all(test, windows))]
+mod captrs_tests_windows {
+    use super::*;
+
+    #[test]
+    fn test_capture_components() {
+        let mut capturer = Capturer::new(0).unwrap();
+
+        let (w, h) = capturer.geometry();
+
+        let frame = capturer.capture_frame_components().unwrap();
+
+        // check that the capture is the correct size
+        // should be width * height * $ (RGBA)
+        assert_eq!((w * h * 4) as usize, frame.len())
+    }
+
+    #[test]
+    fn test_capture() {
+        let mut capturer = Capturer::new(0).unwrap();
+
+        let (w, h) = capturer.geometry();
+
+        let frame = capturer.capture_frame().unwrap();
+
+        // check that the capture is the correct size
+        // should be width * height * $ (RGBA)
+        assert_eq!((w * h) as usize, frame.len())
+    }
+}
+
+#[cfg(all(test, not(windows)))]
+mod captrs_tests_not_windows {
+    use super::*;
+
+    #[test]
+    fn test_capture() {
+        let mut capturer = Capturer::new(0).unwrap();
+
+        let (w, h) = capturer.geometry();
+
+        let frame = capturer.capture_frame().unwrap();
+
+        // check that the capture is the correct size
+        // should be width * height * $ (RGBA)
+        assert_eq!((w * h) as usize, frame.len())
     }
 }
