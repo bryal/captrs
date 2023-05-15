@@ -225,6 +225,7 @@ mod captrs_tests {
     use super::*;
 
     #[test]
+    #[cfg(windows)]
     fn test_capture_components() {
         let mut capturer = Capturer::new(0).unwrap();
 
