@@ -226,7 +226,7 @@ mod captrs_tests {
 
     #[test]
     fn test_capture_components() {
-        let mut capturer = Capturer::new(1).unwrap();
+        let mut capturer = Capturer::new(0).unwrap();
 
         let (w, h) = capturer.geometry();
 
@@ -239,7 +239,7 @@ mod captrs_tests {
 
     #[test]
     fn test_capture() {
-        let mut capturer = Capturer::new(1).unwrap();
+        let mut capturer = Capturer::new(0).unwrap();
 
         let (w, h) = capturer.geometry();
 
