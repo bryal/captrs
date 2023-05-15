@@ -216,7 +216,7 @@ impl Capturer {
     /// Get the last frame stored in `self` by `Self::capture_store_frame`,
     /// if one has ever been stored.
     pub fn get_stored_frame(&self) -> Option<&[Bgr8]> {
-        self.image.as_deref()
+        self.image.as_ref().map(|img| img.as_slice())
     }
 }
 
