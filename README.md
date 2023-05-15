@@ -1,4 +1,4 @@
-# captrs2
+# captrs
 
 Library for cross-platform screen capture in Rust. Uses
 [dxgcap](https://github.com/bryal/dxgcap-rs) for capture on Windows
