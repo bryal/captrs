@@ -225,7 +225,7 @@ mod captrs_tests {
     use super::*;
 
     #[test]
-    fn test_capture() {
+    fn test_capture_components() {
         let mut capturer = Capturer::new(1).unwrap();
 
         let (w, h) = capturer.geometry();
@@ -235,5 +235,18 @@ mod captrs_tests {
         // check that the capture is the correct size
         // should be width * height * $ (RGBA)
         assert_eq!((w * h * 4) as usize, frame.len())
+    }
+
+    #[test]
+    fn test_capture() {
+        let mut capturer = Capturer::new(1).unwrap();
+
+        let (w, h) = capturer.geometry();
+
+        let frame = capturer.capture_frame().unwrap();
+
+        // check that the capture is the correct size
+        // should be width * height * $ (RGBA)
+        assert_eq!((w * h) as usize, frame.len())
     }
 }
