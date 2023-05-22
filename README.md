@@ -1,3 +1,7 @@
+# UNMAINTAINED
+
+I (@bryal) don't have a windows PC anymore (and I don't want one), so I simply don't have any need for this library anymore nor the tools to maintain it. I know there are some people who are currently using this library, so I'd love to hand over maintainership to someone who wants to step up. Whether it's blessing a fork or whatever.
+
 # captrs
 
 Library for cross-platform screen capture in Rust. Uses
